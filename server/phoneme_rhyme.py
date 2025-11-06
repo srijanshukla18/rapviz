@@ -330,14 +330,152 @@ class PhonemeRhymeDetector:
         return self.hash_tail(norm_tail)
 
 
-# TODO: Phase 2 - Add multilingual support
+# Phase 2 - Multilingual support (Hindi/Hinglish)
 class MultilingualPhonemeDetector(PhonemeRhymeDetector):
     """
     Extended detector with multilingual support (Hindi/Hinglish).
 
-    This will be implemented in Phase 2.
+    This detector handles:
+    - Devanagari script (Hindi/Marathi/Nepali)
+    - Romanized Hinglish
+    - Code-switched lyrics (English + Hindi mixed)
+    - Unified phoneme comparison across languages
     """
-    pass
+
+    def __init__(self):
+        super().__init__()
+
+        # Import multilingual modules
+        try:
+            from multilingual_phoneme import (
+                ScriptDetector,
+                HinglishTransliterator,
+                HindiPhonemeMapper,
+                UnifiedPhonemeMapper
+            )
+            self.script_detector = ScriptDetector()
+            self.hinglish_translit = HinglishTransliterator()
+            self.hindi_mapper = HindiPhonemeMapper()
+            self.unified_mapper = UnifiedPhonemeMapper()
+            self.multilingual_enabled = True
+        except ImportError as e:
+            print(f"Warning: Multilingual support not available: {e}")
+            self.multilingual_enabled = False
+
+    def get_phonemes(self, word: str) -> Optional[List[str]]:
+        """
+        Get phoneme sequence for a word (multilingual version).
+
+        This overrides the parent method to support Hindi/Hinglish.
+
+        Process:
+        1. Detect script (Devanagari / ASCII / mixed)
+        2. For Devanagari: directly phonemize to IPA
+        3. For ASCII: check if Hinglish, transliterate if needed
+        4. For English: use parent CMUdict method
+        5. Convert all to unified IPA-ish space
+
+        Args:
+            word: The word to get phonemes for
+
+        Returns:
+            List of phonemes in unified IPA-ish format
+        """
+        if not self.multilingual_enabled:
+            # Fallback to English-only
+            return super().get_phonemes(word)
+
+        # Detect script
+        script_type = self.script_detector.detect_script(word)
+
+        # Handle Devanagari script
+        if script_type == 'devanagari':
+            hindi_phonemes = self.hindi_mapper.devanagari_to_phonemes(word)
+            # Already in IPA-ish format, just return
+            return hindi_phonemes if hindi_phonemes else None
+
+        # Handle ASCII (could be English or Hinglish)
+        if script_type == 'ascii':
+            # Check if it looks like Hinglish
+            if self.hinglish_translit.looks_like_hinglish(word):
+                # Try to transliterate to Devanagari
+                devanagari = self.hinglish_translit.transliterate_to_devanagari(word)
+                if devanagari:
+                    hindi_phonemes = self.hindi_mapper.devanagari_to_phonemes(devanagari)
+                    if hindi_phonemes:
+                        return hindi_phonemes
+
+            # Not Hinglish or transliteration failed - try English
+            english_phonemes = super().get_phonemes(word)
+            if english_phonemes:
+                # Convert ARPABET to unified IPA-ish
+                unified_phonemes = self.unified_mapper.arpabet_to_unified(english_phonemes)
+                return unified_phonemes
+
+        # Fallback to English
+        english_phonemes = super().get_phonemes(word)
+        if english_phonemes:
+            unified_phonemes = self.unified_mapper.arpabet_to_unified(english_phonemes)
+            return unified_phonemes
+
+        return None
+
+    def extract_rhyme_tail(self, phonemes: List[str]) -> Optional[Tuple[str, ...]]:
+        """
+        Extract rhyme tail for multilingual phonemes.
+
+        For IPA phonemes, we find the last vowel and take from there to end.
+
+        Args:
+            phonemes: List of IPA-ish phonemes
+
+        Returns:
+            Tuple of phonemes representing the rhyme tail
+        """
+        if not phonemes:
+            return None
+
+        # Define vowel characters (IPA vowels)
+        vowels = {'a', 'e', 'i', 'o', 'u', 'æ', 'ɑ', 'ɔ', 'ɛ', 'ɪ', 'ʊ', 'ʌ', 'ə', 'ɜ'}
+
+        # Find last vowel
+        last_vowel_idx = None
+        for i in range(len(phonemes) - 1, -1, -1):
+            phoneme = phonemes[i]
+            # Check if phoneme contains a vowel
+            if any(v in phoneme for v in vowels):
+                last_vowel_idx = i
+                break
+
+        # If no vowel found, use whole word
+        if last_vowel_idx is None:
+            return tuple(phonemes)
+
+        # Return from last vowel to end
+        return tuple(phonemes[last_vowel_idx:])
+
+    def normalize_phoneme_tail(self, tail: Tuple[str, ...]) -> Tuple[str, ...]:
+        """
+        Normalize a phoneme tail for comparison (multilingual version).
+
+        Uses unified mapper to ensure consistency across languages.
+
+        Args:
+            tail: Phoneme tail tuple
+
+        Returns:
+            Normalized tail tuple
+        """
+        if not tail:
+            return tail
+
+        if self.multilingual_enabled:
+            # Use unified normalization
+            normalized = self.unified_mapper.normalize_for_comparison(list(tail))
+            return normalized
+        else:
+            # Fallback to parent method
+            return super().normalize_phoneme_tail(tail)
 
 
 # Phase 3 - Multisyllable and internal rhyme detection

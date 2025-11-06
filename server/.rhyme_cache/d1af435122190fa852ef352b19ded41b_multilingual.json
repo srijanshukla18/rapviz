@@ -1,0 +1,25 @@
+{
+  "rhyme_clusters": [
+    [
+      "bhai",
+      "Mary",
+      "scary"
+    ],
+    [
+      "Mack",
+      "black",
+      "track"
+    ],
+    [
+      "cat",
+      "hat",
+      "bat"
+    ],
+    [
+      "dog",
+      "log"
+    ]
+  ],
+  "detector_type": "multilingual",
+  "cache_key": "d1af435122190fa852ef352b19ded41b_multilingual"
+}
