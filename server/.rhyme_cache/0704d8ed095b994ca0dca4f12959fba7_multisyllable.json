@@ -1,0 +1,40 @@
+{
+  "rhyme_clusters": [
+    [
+      "I",
+      "I"
+    ],
+    [
+      "flow",
+      "so",
+      "go"
+    ],
+    [
+      "everybody",
+      "crazy"
+    ],
+    [
+      "knows",
+      "rows"
+    ],
+    [
+      "From",
+      "bottom"
+    ],
+    [
+      "top",
+      "stop",
+      "pop"
+    ],
+    [
+      "gonna",
+      "soda"
+    ],
+    [
+      "that",
+      "that"
+    ]
+  ],
+  "detector_type": "multisyllable",
+  "cache_key": "0704d8ed095b994ca0dca4f12959fba7_multisyllable"
+}

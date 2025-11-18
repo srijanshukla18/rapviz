@@ -1,0 +1,15 @@
+{
+  "rhyme_clusters": [
+    [
+      "cat",
+      "hat",
+      "bat"
+    ],
+    [
+      "dog",
+      "log"
+    ]
+  ],
+  "detector_type": "basic",
+  "cache_key": "33805c60a7dd6038f79d856c1c31c75c_basic"
+}
